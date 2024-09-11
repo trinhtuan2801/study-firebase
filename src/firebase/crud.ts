@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import firebaseServices from './services';
 import { Collection } from './constant';
-import { getQuery, QueryObject } from './query';
+import { getQueries, Query } from './query';
 
 const { firestore } = firebaseServices;
 
@@ -21,7 +21,7 @@ export const getDocumentById = (collectionName: Collection, id: string) => {
 };
 
 export type GetDocumentsOptions = {
-  queries: QueryObject[];
+  queries: Query[];
 };
 
 export type GetDocuments = (
@@ -32,7 +32,7 @@ export type GetDocuments = (
 export const getDocuments: GetDocuments = (collectionName, options) => {
   const { queries = [] } = options || {};
 
-  return getDocs(query(collection(firestore, collectionName), ...getQuery(...queries)));
+  return getDocs(query(collection(firestore, collectionName), ...getQueries(...queries)));
 };
 
 export const addDocument = (collectionName: Collection, data: object) => {
