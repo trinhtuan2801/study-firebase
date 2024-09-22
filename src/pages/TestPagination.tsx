@@ -25,21 +25,25 @@ export default function TestPagination() {
     queryKey: ['users'],
     queryFn: async () =>
       getUsers({
-        queries: [
-          { type: 'order', field: 'order' },
-          { type: 'limit', limit: 10 },
-          { type: 'start-after', value: lastDocRef.current },
-        ],
+        query: {
+          where: [
+            { field: 'order', operator: '>=', value: 10 },
+            { field: 'order', operator: '<=', value: 50 },
+          ],
+          orderBy: 'order',
+          limit: 10,
+          startAfter: lastDocRef.current,
+        },
       }),
     refetchOnWindowFocus: false,
   });
 
   const refreshList = async () => {
     const { users } = await getUsers({
-      queries: [
-        { type: 'order', field: 'order' },
-        { type: 'end-at', value: lastDocRef.current },
-      ],
+      query: {
+        orderBy: 'order',
+        endAt: lastDocRef.current,
+      },
     });
     setList(users);
   };

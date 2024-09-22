@@ -1,107 +1,73 @@
 import {
-  endAt,
-  endBefore,
-  limit,
-  orderBy,
+  endAt as firebaseEndAt,
+  endBefore as firebaseEndBefore,
+  limit as firebaseLimit,
+  orderBy as firebaseOrderBy,
   OrderByDirection,
   QueryConstraint,
-  startAfter,
-  startAt,
-  where,
+  startAfter as firebaseStartAfter,
+  startAt as firebaseStartAt,
+  where as firebaseWhere,
   WhereFilterOp,
 } from 'firebase/firestore';
 
-export type Query =
-  | WhereQuery
-  | OrderQuery
-  | LimitQuery
-  | StartAtQuery
-  | StartAfterQuery
-  | EndAtQuery
-  | EndBeforeQuery;
+export type Query = {
+  where?: WhereQuery | WhereQuery[];
+  orderBy?: string;
+  orderByDirection?: OrderByDirection;
+  limit?: number;
+  startAt?: any;
+  startAfter?: any;
+  endAt?: any;
+  endBefore?: any;
+};
 
 export interface WhereQuery {
-  type: 'where';
   field: string;
   operator: WhereFilterOp;
   value: any;
 }
 
-export interface OrderQuery {
-  type: 'order';
-  field: string;
-  order?: OrderByDirection;
-}
+export type GetQueries = (query?: Query) => QueryConstraint[];
 
-export interface LimitQuery {
-  type: 'limit';
-  limit: number;
-}
+export const getFirebaseQueries: GetQueries = (query) => {
+  const { where, orderBy, orderByDirection, limit, startAt, startAfter, endAt, endBefore } =
+    query || {};
+  const result: QueryConstraint[] = [];
+  if (where != undefined) {
+    if (Array.isArray(where)) {
+      result.push(
+        ...where.map(({ field, operator, value }) => firebaseWhere(field, operator, value)),
+      );
+    } else {
+      const { field, operator, value } = where;
+      result.push(firebaseWhere(field, operator, value));
+    }
+  }
 
-export interface StartAtQuery {
-  type: 'start-at';
-  value: any;
-}
+  if (orderBy != undefined) {
+    result.push(firebaseOrderBy(orderBy, orderByDirection));
+  }
 
-export interface StartAtQuery {
-  type: 'start-at';
-  value: any;
-}
+  if (limit != undefined) {
+    result.push(firebaseLimit(limit));
+  }
 
-export interface StartAfterQuery {
-  type: 'start-after';
-  value: any;
-}
+  if (startAt != undefined) {
+    result.push(firebaseStartAt(startAt));
+  }
 
-export interface EndAtQuery {
-  type: 'end-at';
-  value: any;
-}
+  if (startAfter != undefined) {
+    result.push(firebaseStartAfter(startAfter));
+  }
 
-export interface EndBeforeQuery {
-  type: 'end-before';
-  value: any;
-}
+  if (endAt != undefined) {
+    result.push(firebaseEndAt(endAt));
+  }
 
-export type GetQueries = (...queries: Query[]) => QueryConstraint[];
+  if (endBefore != undefined) {
+    result.push(firebaseEndBefore(endBefore));
+  }
 
-export const getQueries: GetQueries = (...queries) => {
-  return queries
-    .map((queryObject) => {
-      switch (queryObject.type) {
-        case 'where': {
-          const { field, operator, value } = queryObject;
-          return where(field, operator, value);
-        }
-        case 'order': {
-          const { field, order = 'asc' } = queryObject;
-          return orderBy(field, order);
-        }
-        case 'limit': {
-          const { limit: value } = queryObject;
-          return limit(value);
-        }
-        case 'start-at': {
-          const { value } = queryObject;
-          if (value == undefined) return undefined;
-          return startAt(value);
-        }
-        case 'start-after': {
-          const { value } = queryObject;
-          if (value == undefined) return undefined;
-          return startAfter(value);
-        }
-        case 'end-at': {
-          const { value } = queryObject;
-          if (value == undefined) return undefined;
-          return endAt(value);
-        }
-        case 'end-before': {
-          const { value } = queryObject;
-          if (value == undefined) return undefined;
-          return endBefore(value);
-        }
-      }
-    })
-    .filter((query) => query != undefined);
+  return result;
 };
