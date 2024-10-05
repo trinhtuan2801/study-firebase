@@ -89,14 +89,25 @@ const EditUserDialog = forwardRef<EditUserDialogRef, Props>(function EditUserDia
               <Input placeholder='firstName' {...form.register('firstName')} />
               <Input placeholder='lastName' {...form.register('lastName')} />
             </div>
-            <Input placeholder='order' {...form.register('order')} />
+            <Input
+              placeholder='order'
+              type='number'
+              {...form.register('order', {
+                valueAsNumber: true,
+              })}
+            />
           </div>
         </div>
         <DialogFooter>
           <Button variant='ghost' onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={form.handleSubmit(updateUserData)} disabled={loading}>
+          <Button
+            onClick={form.handleSubmit(updateUserData, (errors) => {
+              console.log(errors);
+            })}
+            disabled={loading}
+          >
             Update
           </Button>
         </DialogFooter>

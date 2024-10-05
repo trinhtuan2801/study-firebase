@@ -78,7 +78,6 @@ export default function useFirebaseInfinityQuery<TItem = any>({
     if (oldItemIndex === -1) return;
     newData.splice(oldItemIndex, 1, newItem);
     setData(newData);
-    console.log(newData);
   };
 
   useEffect(() => {
