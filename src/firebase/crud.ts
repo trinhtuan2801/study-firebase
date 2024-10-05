@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import firebaseServices from './services';
 import { Collection } from './constant';
-import { getFirebaseQueries, Query } from './query';
+import { getFirebaseQueries, FirebaseQueryOptions } from './query';
 
 const { firestore } = firebaseServices;
 
@@ -21,7 +21,7 @@ export const getDocumentById = (collectionName: Collection, id: string) => {
 };
 
 export type GetDocumentsOptions = {
-  query?: Query;
+  firebaseQueryOptions?: FirebaseQueryOptions;
 }
 
 export type GetDocuments = (
@@ -30,7 +30,7 @@ export type GetDocuments = (
 ) => Promise<QuerySnapshot<DocumentData, DocumentData>>;
 
 export const getDocuments: GetDocuments = (collectionName, options) => {
-  const { query } = options || {};
+  const { firebaseQueryOptions: query } = options || {};
 
   return getDocs(firebaseQuery(collection(firestore, collectionName), ...getFirebaseQueries(query)));
 };

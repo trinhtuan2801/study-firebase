@@ -11,8 +11,8 @@ import {
   WhereFilterOp,
 } from 'firebase/firestore';
 
-export type Query = {
-  where?: WhereQuery | WhereQuery[];
+export type FirebaseQueryOptions<DType = any> = {
+  where?: WhereQuery<DType> | (WhereQuery<DType> | undefined)[];
   orderBy?: string;
   orderByDirection?: OrderByDirection;
   limit?: number;
@@ -22,26 +22,24 @@ export type Query = {
   endBefore?: any;
 };
 
-export interface WhereQuery {
-  field: string;
-  operator: WhereFilterOp;
-  value: any;
-}
+export type WhereQuery<DType = any> = [keyof DType, WhereFilterOp, any];
 
-export type GetQueries = (query?: Query) => QueryConstraint[];
-
-export const getFirebaseQueries: GetQueries = (query) => {
+export function getFirebaseQueries<DType = any>(
+  query?: FirebaseQueryOptions<DType>,
+): QueryConstraint[] {
   const { where, orderBy, orderByDirection, limit, startAt, startAfter, endAt, endBefore } =
     query || {};
   const result: QueryConstraint[] = [];
   if (where != undefined) {
-    if (Array.isArray(where)) {
+    if (Array.isArray(where[0])) {
       result.push(
-        ...where.map(({ field, operator, value }) => firebaseWhere(field, operator, value)),
+        ...where
+          .filter(Boolean)
+          .map(([field, operator, value]) => firebaseWhere(field, operator, value)),
       );
     } else {
-      const { field, operator, value } = where;
-      result.push(firebaseWhere(field, operator, value));
+      const [field, operator, value] = where as WhereQuery;
+      result.push(firebaseWhere(field as string, operator, value));
     }
   }
 
@@ -70,4 +68,4 @@ export const getFirebaseQueries: GetQueries = (query) => {
   }
 
   return result;
-};
+}
