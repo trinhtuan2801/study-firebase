@@ -13,7 +13,7 @@ import {
 
 export type FirebaseQueryOptions<DType = any> = {
   where?: WhereQuery<DType> | (WhereQuery<DType> | undefined)[];
-  orderBy?: string;
+  orderBy?: keyof DType;
   orderByDirection?: OrderByDirection;
   limit?: number;
   startAt?: any;
@@ -44,7 +44,7 @@ export function getFirebaseQueries<DType = any>(
   }
 
   if (orderBy != undefined) {
-    result.push(firebaseOrderBy(orderBy, orderByDirection));
+    result.push(firebaseOrderBy(orderBy as string, orderByDirection));
   }
 
   if (limit != undefined) {

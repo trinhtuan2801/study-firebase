@@ -5,9 +5,9 @@ import { FirebaseQueryOptions } from '../query';
 
 type UseInfinityTableProps<TItem = any> = {
   fetchFn: (
-    queryOptions: FirebaseQueryOptions,
+    queryOptions: FirebaseQueryOptions<TItem>,
   ) => Promise<{ data: TItem[]; snapshots: QuerySnapshot<DocumentData, DocumentData> }>;
-  baseQueryOptions: FirebaseQueryOptions;
+  baseQueryOptions: FirebaseQueryOptions<TItem>;
   getItemId?: (item: TItem) => string;
   fetchItemFn?: (id: string) => Promise<{ data: TItem }>;
   limit?: number;
@@ -18,14 +18,15 @@ export default function useFirebaseInfinityQuery<TItem = any>({
   baseQueryOptions,
   limit = 10,
   fetchItemFn,
-  getItemId = (item) => (item as any).id,
+  getItemId = (item) => (item as any)?.id,
 }: UseInfinityTableProps<TItem>) {
   const lastDocRef = useRef<any>();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
 
-  const [nextData, setNextData] = useState<TItem[]>();
+  const latestGetNextDataIdRef = useRef(0);
+  const prevData = useRef<TItem[]>([]);
   const [data, setData] = useState<TItem[]>([]);
   const [snapshots, setSnapshots] = useState<QuerySnapshot<DocumentData, DocumentData>>();
 
@@ -36,12 +37,17 @@ export default function useFirebaseInfinityQuery<TItem = any>({
   const getNextData = async () => {
     console.log('useFirebaseInfinityQuery - getNextData');
     setIsFetching(true);
-    const { data, snapshots } = await fetchFn({
+    latestGetNextDataIdRef.current++;
+    const getNextDataId = latestGetNextDataIdRef.current;
+    const { data: nextData, snapshots } = await fetchFn({
       ...baseQueryOptions,
       limit,
       startAfter: lastDocRef.current,
     });
-    setNextData(data);
+    if (getNextDataId !== latestGetNextDataIdRef.current) return;
+    const newData = [...prevData.current, ...nextData];
+    prevData.current = newData;
+    setData(newData);
     setSnapshots(snapshots);
     setIsLoading(false);
     setTimeout(() => {
@@ -50,7 +56,7 @@ export default function useFirebaseInfinityQuery<TItem = any>({
   };
 
   const refresh = async () => {
-    // console.log('useFirebaseInfinityQuery - refresh')
+    console.log('useFirebaseInfinityQuery - refresh');
     const { data } = await fetchFn({
       ...baseQueryOptions,
       endAt: lastDocRef.current,
@@ -60,19 +66,21 @@ export default function useFirebaseInfinityQuery<TItem = any>({
   };
 
   const reset = () => {
-    // console.log('useFirebaseInfinityQuery - reset')
+    console.log('useFirebaseInfinityQuery - reset');
     lastDocRef.current = null;
     setIsLoading(true);
-    setNextData(undefined);
+    prevData.current = [];
     setData([]);
     setEndOfList(false);
     getNextData();
   };
 
   const refreshItem = async (id: string) => {
-    // console.log('useFirebaseInfinityQuery - refreshItem')
+    console.log('useFirebaseInfinityQuery - refreshItem', id);
     if (!fetchItemFn || !getItemId) return;
+    setIsFetching(true);
     const { data: newItem } = await fetchItemFn(id);
+    setIsFetching(false);
     const newData = [...data];
     const oldItemIndex = newData.findIndex((oldItem) => getItemId(oldItem) === id);
     if (oldItemIndex === -1) return;
@@ -83,11 +91,6 @@ export default function useFirebaseInfinityQuery<TItem = any>({
   useEffect(() => {
     getNextData();
   }, []);
-
-  useEffect(() => {
-    if (!nextData) return;
-    setData((prev) => [...new Set([...prev, ...nextData])]);
-  }, [nextData]);
 
   useEffect(() => {
     if (!snapshots) return;

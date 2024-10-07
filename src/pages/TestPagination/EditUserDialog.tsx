@@ -28,7 +28,7 @@ const userSchema = z.object({
   id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  order: z.number(),
+  createdDate: z.number(),
 });
 
 const EditUserDialog = forwardRef<EditUserDialogRef, Props>(function EditUserDialog(
@@ -56,7 +56,7 @@ const EditUserDialog = forwardRef<EditUserDialogRef, Props>(function EditUserDia
     () => {
       return {
         open: (userData: UserData) => {
-          setUserData(userData);
+          setUserData({ ...userData });
           setOpen(true);
         },
       };
@@ -89,13 +89,6 @@ const EditUserDialog = forwardRef<EditUserDialogRef, Props>(function EditUserDia
               <Input placeholder='firstName' {...form.register('firstName')} />
               <Input placeholder='lastName' {...form.register('lastName')} />
             </div>
-            <Input
-              placeholder='order'
-              type='number'
-              {...form.register('order', {
-                valueAsNumber: true,
-              })}
-            />
           </div>
         </div>
         <DialogFooter>

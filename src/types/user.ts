@@ -1,6 +1,6 @@
 export interface UserData {
   id: string;
-  order: number;
+  createdDate: number;
   firstName: string;
   lastName: string;
 }
